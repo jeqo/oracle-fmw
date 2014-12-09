@@ -1,0 +1,135 @@
+DOMAIN_MODE='<%= @domain_mode %>'
+DOMAIN_PATH='<%= @domains_path %>/<%= @domain %>'
+APP_PATH='<%= @apps_path %>/<%= @domain %>'
+DOMAIN='<%= @domain %>'
+START_MODE='<%= @start_mode %>'
+CROSSDOMAIN_ENABLED=<%= @crossdomain_enabled %>
+
+ADMIN_USERNAME='<%= @username %>'
+ADMIN_PASSWORD='<%= @password %>'
+
+REPOS_DBURL='<%= @db_url %>'
+REPOS_DBUSER_PREFIX='<%= @db_schema_prefix %>'
+REPOS_DBPASSWORD='<%= @db_schema_password %>'
+
+def alterDatasource(datasource_name, schema_sufix, driver_name):
+	cd('/JDBCSystemResource/' + datasource_name + '/JdbcResource/' + datasource_name + '/JDBCDriverParams/NO_NAME_0')
+	set('URL',REPOS_DBURL)
+	set('PasswordEncrypted',REPOS_DBPASSWORD)
+	if driver_name:
+		set('DriverName', driver_name)
+	cd('Properties/NO_NAME_0/Property/user')
+	set('Value',REPOS_DBUSER_PREFIX+'_'+schema_sufix)
+
+def defineServer(default_name, new_name, machine_name, address, port):
+	cd('/Servers/' + default_name)
+	if machine_name:
+		set('Machine', machine_name)
+	if address:
+		set('ListenAddress', address)
+	set('ListenPort',port)
+	set('Name',new_name)
+
+print 'Creating Domain'
+
+readTemplate('<%= @wl_home %>/common/templates/wls/wls.jar', DOMAIN_MODE)
+
+setOption('ServerStartMode', START_MODE)
+setOption('AppDir', APP_PATH )
+
+cd('/')
+cd('Security/base_domain/User/weblogic')
+set('Name',ADMIN_USERNAME)
+cmo.setPassword(ADMIN_PASSWORD)
+
+if CROSSDOMAIN_ENABLED == true:
+	create('base_domain','SecurityConfiguration')
+	cd('/SecurityConfiguration/base_domain')
+	set('CrossDomainSecurityEnabled',true)
+
+
+<% @machines.each do |machine| -%>
+MACHINE_NAME = '<%= machine['name'] %>'
+NM_ADDRESS = '<%= machine['nm_address'] %>'
+NM_PORT = <%= machine['nm_port'] %>
+
+try:
+	cd('/')
+	create(MACHINE_NAME, 'Machine')
+except BeanAlreadyExistsException:
+	print 'Machine ' + MACHINE_NAME + ' already exists'
+
+cd('Machine/' + MACHINE_NAME)
+create(MACHINE_NAME, 'NodeManager')
+cd('NodeManager/' + MACHINE_NAME)
+set('ListenAddress',NM_ADDRESS)
+set('ListenPort',NM_PORT)
+<% end -%>
+
+defineServer('<%= @admin_server['base_name'] %>', '<%= @admin_server['new_name'] %>', '<%= @admin_server['machine_name'] %>', '<%= @admin_server['address'] %>', <%= @admin_server['port'] %>)
+
+writeDomain(DOMAIN_PATH)
+closeTemplate()
+
+print 'Adding Templates'
+
+readDomain(DOMAIN_PATH)
+
+<% @apps.each do |app| -%>
+<% if app['enabled']==true -%>
+<% if app['name']=='OSB' -%>
+addTemplate('<%= @osb_home %>/common/templates/wls/oracle.osb_template_12.1.3.jar')
+<% end -%>
+<% if app['name']=='SOA' -%>
+addTemplate('<%= @soa_home %>/common/templates/wls/oracle.soa_template_12.1.3.jar')
+<% end -%>
+<% if app['name']=='BPM' -%>
+addTemplate('<%= @soa_home %>/common/templates/wls/oracle.bpm_template_12.1.3.jar')
+<% end -%>
+<% if app['name']=='BAM' -%>
+addTemplate('<%= @soa_home %>/common/templates/wls/oracle.bam.server_template_12.1.3.jar')
+<% end -%>
+<% end -%>
+<% end -%>
+
+print 'Creating Resources'
+
+<% @managed_servers.each do |managed_server| -%>
+defineServer('<%= managed_server['base_name'] %>', '<%= managed_server['new_name'] %>', '<%= managed_server['machine_name'] %>', '<%= managed_server['address'] %>', <%= managed_server['port'] %>)
+<% end -%>
+
+
+alterDatasource('opss-audit-DBDS', 'IAU_APPEND', None)
+alterDatasource('opss-audit-viewDS', 'IAU_VIEWER', None)
+alterDatasource('opss-data-source', 'OPSS', None)
+alterDatasource('LocalSvcTblDataSource', 'STB', None)
+<% @apps.each do |app| -%>
+<% if app['enabled']==true -%>
+<% if app['name']=='SOA' -%>
+alterDatasource('EDNDataSource', 'SOAINFRA', None)
+alterDatasource('EDNLocalTxDataSource', 'SOAINFRA', None)
+alterDatasource('OraSDPMDataSource', 'UMS', None)
+alterDatasource('mds-soa', 'MDS', None)
+alterDatasource('mds-owsm', 'MDS', None)
+alterDatasource('SOADataSource', 'SOAINFRA', None)
+alterDatasource('SOALocalTxDataSource', 'SOAINFRA', None)
+<% end -%>
+<% if app['name']=='BAM' -%>
+alterDatasource('BamDataSource', 'SOAINFRA', None)
+alterDatasource('mds-bam', 'MDS', None)
+alterDatasource('BamJobSchedDataSource', 'WLS', None)
+alterDatasource('OraSDPMDataSource', 'UMS', None)
+<% end -%>
+<% if app['name']=='OSB' -%>
+alterDatasource('wlsbjmsrpDataSource', 'SOAINFRA', None)
+alterDatasource('OraSDPMDataSource', 'UMS', None)
+<% end -%>
+<% end -%>
+<% end -%>
+
+updateDomain()
+closeDomain()
+dumpStack()
+
+print('Exiting...')
+exit()
