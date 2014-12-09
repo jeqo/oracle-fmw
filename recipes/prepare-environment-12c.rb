@@ -64,8 +64,8 @@ directory node['fmw-12c']['home'] do
 end
 
 # Create OraInventory template
-ora_inventory_directory = "#{node['fmw-12c']['orainventory_directory']}"
-ora_inventory_file = "#{node['fmw-12c']['orainventory_file']}"
+ora_inventory_directory = node['fmw-12c']['orainventory_directory']
+ora_inventory_file = node['fmw-12c']['orainventory_file']
 
 directory ora_inventory_directory do
 	owner os_user
