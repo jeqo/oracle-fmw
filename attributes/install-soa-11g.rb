@@ -1,0 +1,7 @@
+default['soa-11g']['installer_file_1'] = "ofm_soa_generic_11.1.1.7.0_disk1_1of2.zip"
+default['soa-11g']['installer_file_2'] = "ofm_soa_generic_11.1.1.7.0_disk1_2of2.zip"
+default['soa-11g']['home_directory'] = "oracle_soa"
+default['soa-11g']['checksum_1'] = "81428ed4b106aba4e475244fe46d0568ada85a112ccf7d2faa2ea85724240779"
+default['soa-11g']['checksum_2'] = "0894407241f8f5e98c4e7faa752d3ff51522bac1cf9646f60d5f96f2aaa4b0c4"
+default['soa-11g']['url_1'] = "" #"file:///data/oracle-fmw/soa-11g/ofm_soa_generic_11.1.1.7.0_disk1_1of2.zip"
+default['soa-11g']['url_2'] = "" #"file:///data/oracle-fmw/soa-11g/ofm_soa_generic_11.1.1.7.0_disk1_2of2.zip"

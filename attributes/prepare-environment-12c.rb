@@ -5,7 +5,7 @@ default['fmw-12c']['os_user_home'] = "/home/#{node['fmw-12c']['os_user']}"
 default['fmw-12c']['orainventory_directory'] = "#{node['fmw-12c']['os_user_home']}/oraInventory"
 default['fmw-12c']['orainventory_file'] = "#{node['fmw-12c']['orainventory_directory']}/ora_inventory.rsp"
 default['fmw-12c']['version'] = "12c"
-default['fmw-12c']['home'] = "#{node['fmw-12c']['os_user_home']}/fmw/bpm_qs/#{node['fmw-12c']['version']}"
+default['fmw-12c']['home'] = "#{node['fmw-12c']['os_user_home']}/fmw/#{node['fmw-12c']['version']}"
 
 default['fmw-12c']['soft_nofile'] = "8182"
 default['fmw-12c']['hard_nofile'] = "8182"

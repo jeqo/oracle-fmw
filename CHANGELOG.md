@@ -5,9 +5,14 @@ This file is used to list changes made in each version of the oracle_fmw cookboo
 
 0.1.0
 -----
-- [your_name] - Initial release of oracle_fmw
+- [jeqo] - Initial release of oracle_fmw.
 
-- - -
-Check the [Markdown Syntax Guide](http://daringfireball.net/projects/markdown/syntax) for help with Markdown.
+0.1.1
+-----
+- [jeqo] - Adding documentation.
 
-The [Github Flavored Markdown page](http://github.github.com/github-flavored-markdown/) describes the differences between markdown on github and standard markdown.
+
+0.2.0
+-----
+- [jeqo] - SOA Suite 12c support
+- [jeqo] - Oracle Fusion Middleware 11g support (SOA, BPM, OSB) 

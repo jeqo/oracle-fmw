@@ -9,11 +9,14 @@ group os_installer_group do
 	append true
 end
 
+
+os_user_home = node['fmw-12c']['os_user_home']
+
 user os_user do
 	supports :manage_home => true
 	comment "Oracle user"
 	gid os_installer_group
-	home node['fmw-12c']['os_user_home']
+	home os_user_home
 	shell "/bin/bash"
 	password "$1$rUhN5PYi$2rQAEEuOBScZOKsMRpHDe0"
 end

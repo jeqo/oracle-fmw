@@ -8,9 +8,10 @@ wl_home = "#{mw_home}/wlserver"
 common_home = "#{mw_home}/oracle_common"
 osb_home = "#{mw_home}/osb"
 soa_home = "#{mw_home}/soa"
+java_home = node['java']['java_home']
 
 template create_domain_py do
-	source "new_domain-12c.py.erb"
+	source "domain-12c.py.erb"
 	variables({
 		:domain_mode => node['domain-12c']['mode'],
 		:domains_path => node['domain-12c']['domains_path'],
@@ -35,6 +36,8 @@ template create_domain_py do
 end
 
 # Create directories
+domain_home = "#{node['domain-12c']['domains_path']}/#{node['domain-12c']['name']}"
+
 directory node['domain-12c']['domains_path'] do
 	owner os_user
 	group os_installer_group
@@ -59,5 +62,37 @@ execute wlst_exec do
 	user os_user
 	group os_installer_group
 	action :run
-	creates "#{node['domain-12c']['domains_path']}/#{node['domain-12c']['name']}/config/config.xml"
+	creates "#{domain_home}/config/config.xml"
+end
+
+# Upstart script
+start_nm_script = "/etc/init/nodemanager.conf"
+
+template start_nm_script do
+	source "start-node_manager-12c.sh.erb"
+	variables({
+		:os_user => os_user,
+		:domain_home => domain_home
+	})
+end
+
+start_admin_server_script = "/etc/init/#{node['domain-12c']['name']}-admin_server.conf"
+
+template start_admin_server_script do
+	source "start-admin_server-12c.sh.erb"
+	variables({
+		:os_user => os_user,
+		:domain_home => domain_home
+	})
+end
+
+# Node Manager Properties file
+nm_props = "#{domain_home}/nodemanager/nodemanager.properties"
+
+template nm_props do
+	source "node_manager-12c.properties.erb"
+	variables({
+		:domain_home => domain_home,
+		:java_home => java_home
+	})
 end

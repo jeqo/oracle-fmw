@@ -1,0 +1,180 @@
+JAVA_HOME='<%= @java_home %>'
+
+DOMAIN_PATH='<%= @domains_path %>/<%= @domain %>'
+APP_PATH='<%= @apps_path %>/<%= @domain %>'
+DOMAIN='<%= @domain %>'
+START_MODE='<%= @start_mode %>'
+CROSSDOMAIN_ENABLED=<%= @crossdomain_enabled %>
+
+ADMIN_USERNAME='<%= @username %>'
+ADMIN_PASSWORD='<%= @password %>'
+
+REPOS_DBURL='<%= @db_url %>'
+REPOS_DBUSER_PREFIX='<%= @db_schema_prefix %>'
+REPOS_DBPASSWORD='<%= @db_schema_password %>'
+
+def createBootPropertiesFile(directoryPath, fileName, username, password):
+  serverDir = File(directoryPath)
+  bool = serverDir.mkdirs()
+  fileNew=open(directoryPath + '/' + fileName, 'w')
+  fileNew.write('username=%s\n' % username)
+  fileNew.write('password=%s\n' % password)
+  fileNew.flush()
+  fileNew.close()
+
+def alterDatasource(datasource_name, schema_sufix, driver_name):
+	cd('/JDBCSystemResource/' + datasource_name + '/JdbcResource/' + datasource_name + '/JDBCDriverParams/NO_NAME_0')
+	set('URL',REPOS_DBURL)
+	set('PasswordEncrypted',REPOS_DBPASSWORD)
+	if driver_name:
+		set('DriverName', driver_name)
+	cd('Properties/NO_NAME_0/Property/user')
+	set('Value',REPOS_DBUSER_PREFIX+'_'+schema_sufix)
+
+def defineServer(default_name, new_name, machine_name, address, port):
+	cd('/Servers')
+	servers = ls()
+	if (servers.find(default_name) != -1):
+		print 'Server ' +  default_name + ' already exists'
+		cd('/Servers/' + default_name)
+		if machine_name != '' :
+			set('Machine', machine_name)
+		set('ListenAddress', address)
+		set('ListenPort',port)
+		set('Name',new_name)
+	else:
+		print 'Server ' +  default_name + ' does not exist. ' +  new_name + ' will be created exists'
+		cd('/')
+		create(new_name, 'Server')
+		cd('/Servers/' + new_name)
+		if machine_name != '' :
+			set('Machine', machine_name)
+		set('ListenAddress', address)
+		set('ListenPort',port)
+
+print 'Creating Domain'
+
+readTemplate('<%= @wl_home %>/common/templates/domains/wls.jar')
+
+setOption('JavaHome', JAVA_HOME)
+setOption('ServerStartMode', START_MODE)
+setOption('AppDir', APP_PATH )
+
+cd('/')
+cd('Security/base_domain/User/weblogic')
+set('Name',ADMIN_USERNAME)
+cmo.setPassword(ADMIN_PASSWORD)
+
+if CROSSDOMAIN_ENABLED == true:
+	create('base_domain','SecurityConfiguration')
+	cd('/SecurityConfiguration/base_domain')
+	set('CrossDomainSecurityEnabled',true)
+
+
+<% @machines.each do |machine| -%>
+MACHINE_NAME = '<%= machine['name'] %>'
+NM_ADDRESS = '<%= machine['nm_address'] %>'
+NM_PORT = <%= machine['nm_port'] %>
+NM_TYPE = '<%= machine['nm_type'] %>'
+
+try:
+	cd('/')
+	create(MACHINE_NAME, 'Machine')
+except BeanAlreadyExistsException:
+	print 'Machine ' + MACHINE_NAME + ' already exists'
+
+cd('Machine/' + MACHINE_NAME)
+create(MACHINE_NAME, 'NodeManager')
+cd('NodeManager/' + MACHINE_NAME)
+set('ListenAddress',NM_ADDRESS)
+set('ListenPort',NM_PORT)
+set('NMType',NM_TYPE)
+<% end -%>
+
+defineServer('<%= @admin_server['base_name'] %>', '<%= @admin_server['new_name'] %>', '<%= @admin_server['machine_name'] %>', '<%= @admin_server['address'] %>', <%= @admin_server['port'] %>)
+
+writeDomain(DOMAIN_PATH)
+closeTemplate()
+
+createBootPropertiesFile(DOMAIN_PATH + '/servers/' + '<%= @admin_server['new_name'] %>' + '/security', 'boot.properties', ADMIN_USERNAME, ADMIN_PASSWORD)
+
+print 'Adding Templates'
+
+readDomain(DOMAIN_PATH)
+
+<% @apps.each do |app| -%>
+<% if app['enabled']==true -%>
+<% if app['name']=='OSB' -%>
+addTemplate('<%= @osb_home %>/common/templates/applications/wlsb.jar')
+<% end -%>
+<% if app['name']=='OSB_DEV' -%>
+addTemplate('<%= @osb_home %>/common/templates/applications/wlsb_single_server.jar')
+<% end -%>
+<% if app['name']=='SOA' -%>
+addTemplate('<%= @soa_home %>/common/templates/applications/oracle.soa_template_11.1.1.jar')
+<% end -%>
+<% if app['name']=='SOA_DEV' -%>
+addTemplate('<%= @soa_home %>/common/templates/applications/oracle.soa_template_developer_11.1.1.jar')
+<% end -%>
+<% if app['name']=='EM' -%>
+addTemplate('<%= @common_home %>/common/templates/applications/oracle.em_11_1_1_0_0_template.jar')
+<% end -%>
+<% if app['name']=='BAM' -%>
+addTemplate('<%= @soa_home %>/common/templates/applications/oracle.bam_template_11.1.1.jar')
+<% end -%>
+<% end -%>
+<% end -%>
+
+updateDomain()
+closeDomain()
+
+print 'Creating Resources'
+
+readDomain(DOMAIN_PATH)
+
+
+<% @managed_servers.each do |managed_server| -%>
+defineServer('<%= managed_server['base_name'] %>', '<%= managed_server['new_name'] %>', '<%= managed_server['machine_name'] %>', '<%= managed_server['address'] %>', <%= managed_server['port'] %>)
+<% end -%>
+
+<% @apps.each do |app| -%>
+<% if app['enabled']==true -%>
+<% if app['name']=='OSB' -%>
+alterDatasource('wlsbjmsrpDataSource', 'SOAINFRA', 'oracle.jdbc.OracleDriver')
+<% end -%>
+<% if app['name']=='OSB_DEV' -%>
+alterDatasource('wlsbjmsrpDataSource', 'SOAINFRA', 'oracle.jdbc.OracleDriver')
+<% end -%>
+<% if app['name']=='SOA' -%>
+alterDatasource('EDNDataSource', 'SOAINFRA', None)
+alterDatasource('EDNLocalTxDataSource', 'SOAINFRA', None)
+alterDatasource('OraSDPMDataSource', 'ORASDPM', None)
+alterDatasource('mds-soa', 'MDS', None)
+alterDatasource('mds-owsm', 'MDS', None)
+alterDatasource('SOADataSource', 'SOAINFRA', None)
+alterDatasource('SOALocalTxDataSource', 'SOAINFRA', None)
+<% end -%>
+<% if app['name']=='SOA_DEV' -%>
+alterDatasource('EDNDataSource', 'SOAINFRA', None)
+alterDatasource('EDNLocalTxDataSource', 'SOAINFRA', None)
+alterDatasource('OraSDPMDataSource', 'ORASDPM', None)
+alterDatasource('mds-soa', 'MDS', None)
+alterDatasource('mds-owsm', 'MDS', None)
+alterDatasource('SOADataSource', 'SOAINFRA', None)
+alterDatasource('SOALocalTxDataSource', 'SOAINFRA', None)
+<% end -%>
+<% if app['name']=='BAM' -%>
+alterDatasource('BAMDataSource', 'ORABAM', None)
+alterDatasource('OraSDPMDataSource', 'ORASDPM', None)
+alterDatasource('mds-owsm', 'MDS', None)
+<% end -%>
+<% end -%>
+<% end -%>
+
+
+updateDomain()
+closeDomain()
+dumpStack()
+
+print('Exiting...')
+exit()

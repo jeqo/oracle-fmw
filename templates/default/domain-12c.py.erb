@@ -52,6 +52,7 @@ if CROSSDOMAIN_ENABLED == true:
 MACHINE_NAME = '<%= machine['name'] %>'
 NM_ADDRESS = '<%= machine['nm_address'] %>'
 NM_PORT = <%= machine['nm_port'] %>
+NM_TYPE = '<%= machine['nm_type'] %>'
 
 try:
 	cd('/')
@@ -64,6 +65,7 @@ create(MACHINE_NAME, 'NodeManager')
 cd('NodeManager/' + MACHINE_NAME)
 set('ListenAddress',NM_ADDRESS)
 set('ListenPort',NM_PORT)
+set('NMType',NM_TYPE)
 <% end -%>
 
 defineServer('<%= @admin_server['base_name'] %>', '<%= @admin_server['new_name'] %>', '<%= @admin_server['machine_name'] %>', '<%= @admin_server['address'] %>', <%= @admin_server['port'] %>)

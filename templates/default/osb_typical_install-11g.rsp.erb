@@ -1,0 +1,43 @@
+[ENGINE]
+
+#DO NOT CHANGE THIS.
+Response File Version=1.0.0.0.0
+
+[GENERIC]
+
+#Set this to true if you wish to specify a directory where latest updates are downloaded. This option would use the software updates from the specified directory
+SPECIFY_DOWNLOAD_LOCATION=false
+
+#
+SKIP_SOFTWARE_UPDATES=true
+
+#If the Software updates are already downloaded and available on your local system, then specify the path to the directory where these patches are available and set SPECIFY_DOWNLOAD_LOCATION to true
+SOFTWARE_UPDATES_DOWNLOAD_LOCATION=
+
+#Write the name of the Oracle Home directory. The Oracle Home directory name may only contain alphanumeric , hyphen (-) , dot (.) and underscore (_) characters, and it must begin with an alphanumeric character.
+ORACLE_HOME=<%= @oracle_home %>
+
+#Write the complete path to a valid Middleware Home.
+MIDDLEWARE_HOME=<%= @middleware_home %>
+
+#
+#Set this to true if typical installation must be done. If this is set to true then wariable "CUSTOM TYPE" must be set to false as the variables are mutually exclusive
+TYPICAL TYPE=true
+
+#Set this to true if custom installation must be done, all other required variables need to be provided. If this is set to true then variable "TYPICAL TYPE" must be set to false as the variables are mutually exclusive.
+CUSTOM TYPE=false
+
+#Give the complete path to a valid WebLogic Server Home for the corresponding Middleware Home entered.
+WL_HOME=<%= @wl_home %>
+
+#Give the complete path to a valid OEPE Home for the corresponding Middleware Home entered. This input will be needed in both typical and custom installations. But in case of custom installation, Oracle Service Bus IDE must be set to true.
+OEPE_HOME=
+
+
+[SYSTEM]
+
+
+[APPLICATIONS]
+
+
+[RELATIONSHIPS]
